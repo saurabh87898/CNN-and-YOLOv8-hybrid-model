@@ -1,0 +1,400 @@
+!nvidia-smi
+
+
+import tensorflow as tf
+from tensorflow.keras import models, layers
+import matplotlib.pyplot as plt
+from IPython.display import HTML
+import tensorflow.keras.regularizers as regularizers
+l2_regularizer = regularizers.l2(0.001)
+import tensorflow as tf
+from tensorflow.keras.regularizers import l2
+# regularizer = l2(0.001)
+
+
+import os
+HOME = os.getcwd()
+print(HOME)
+
+
+!pip install ultralytics
+
+from IPython import display
+display.clear_output()
+!yolo mode= checks
+
+
+!pip install bbox
+
+
+%matplotlib inline
+from PIL import Image
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+
+!pip install roboflow
+
+from roboflow import Roboflow
+rf = Roboflow(api_key="LAVlZ4gjwlnGTdQ6HRBA")
+project = rf.workspace("lakshantha-dissanayake").project("apple-detection-5z37o")
+version = project.version(1)
+dataset = version.download("yolov8")
+
+
+# work training
+
+import os
+from ultralytics import YOLO
+
+# Load a model
+model = YOLO('yolov8n.yaml')  # build a new model from YAML
+model = YOLO('/content/Apple-Detection-1/train')  # load a pretrained model (recommended for training)
+model = YOLO('yolov8n.yaml').load('yolov8n.pt')  # build from YAML and transfer weights
+
+# Train the model
+results = model.train(data='/content/Apple-Detection-1/data.yaml', epochs=50, imgsz=640)
+
+
+from google.colab import drive
+drive.mount('/content/drive')
+
+
+model.save('/content/drive/MyDrive/Model/YOLO_model2.h5')  # Change path as necessary
+
+
+# This code will display the confusion matrix image that is saved in the /content/runs/detect/train/ directory.
+from IPython.display import Image
+Image(filename = f'/content/runs/detect/train2/confusion_matrix.png',width=600)
+
+
+Image(filename = f'/content/runs/detect/train2/results.png',width=600)
+
+
+Image(filename = f'/content/runs/detect/train2/val_batch0_pred.jpg',width=600)
+
+
+CNN
+
+import tensorflow as tf
+from tensorflow.keras import layers, models
+
+from google.colab import drive
+drive.mount('/content/drive')
+
+import os
+import numpy as np
+import cv2
+from sklearn.model_selection import train_test_split
+
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+
+# Define your dataset directory
+dataset_dir = '/content/drive/MyDrive/minar project dataset/train'
+
+# Define image size
+image_height, image_width = 255,255
+
+# Function to load and preprocess images
+def load_images(dataset_dir):
+    images = []
+    labels = []
+    for category in os.listdir(dataset_dir):
+        category_dir = os.path.join(dataset_dir, category)
+        label = 1 if category == 'fresh_apple' else 0  # Assign labels (0 or 1) based on folder names
+        for img_name in os.listdir(category_dir):
+            img_path = os.path.join(category_dir, img_name)
+            img = cv2.imread(img_path)
+            img = cv2.resize(img, (image_height, image_width))
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # Convert BGR to RGB
+            img = img.astype('float32') / 255.0  # Normalize pixel values
+            images.append(img)
+            labels.append(label)
+    return np.array(images), np.array(labels)
+
+# Load and preprocess images
+images, labels = load_images(dataset_dir)
+
+# Split the dataset into training and testing sets
+train_images, test_images, train_labels, test_labels = train_test_split(images, labels, test_size=0.2, random_state=42)
+
+
+print(train_labels[1])
+import matplotlib.pyplot as plt
+plt.imshow(train_images[1])
+plt.show()
+
+
+train_labels[:5]
+
+
+class_names = ['Stale', 'Fresh']
+
+fig, axs = plt.subplots(3, 3, figsize=(12, 12))
+
+for i in range(9):
+    axs[i // 3, i % 3].imshow(train_images[i])
+    axs[i // 3, i % 3].set_title(f"Class: {class_names[train_labels[i]]}")
+    axs[i // 3, i % 3].axis('off')
+
+plt.tight_layout()
+plt.show()
+
+num_channels=3
+model2 = models.Sequential()
+
+# Convolutional layers
+model2.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(image_height, image_width, num_channels)))
+model2.add(layers.MaxPooling2D((2, 2)))
+model2.add(layers.Conv2D(64, (3, 3), activation='relu'))
+model2.add(layers.MaxPooling2D((2, 2)))
+model2.add(layers.Conv2D(128, (3, 3), activation='relu'))
+model2.add(layers.MaxPooling2D((2, 2)))
+model2.add(layers.Conv2D(128, (3, 3), activation='relu'))
+model2.add(layers.MaxPooling2D((2, 2)))
+model2.add(layers.Conv2D(128, (3, 3), activation='relu'))
+model2.add(layers.MaxPooling2D((2, 2)))
+model2.add(layers.Conv2D(128, (3, 3), activation='relu'))
+model2.add(layers.MaxPooling2D((2, 2)))
+
+
+
+# Flatten layer
+model2.add(layers.Flatten())
+
+# Dense layers
+model2.add(layers.Dense(255, activation='relu'))
+model2.add(layers.Dense(1, activation='sigmoid'))
+
+
+test_loss, test_accuracy = model2.evaluate(test_images, test_labels)
+
+
+
+import matplotlib.pyplot as plt
+
+def plot_training_history(history):
+    fig, axs = plt.subplots(1, 2, figsize=(12, 6))
+
+    # Plot training and validation accuracy values
+    axs[0].plot(history.history['accuracy'], label='Training Accuracy')
+    axs[0].plot(history.history['val_accuracy'], label='Validation Accuracy')
+    axs[0].set_title('Training and Validation Accuracy')
+    axs[0].set_xlabel('Epoch')
+    axs[0].set_ylabel('Accuracy')
+    axs[0].legend()
+
+    # Plot training and validation loss values
+    axs[1].plot(history.history['loss'], label='Training Loss')
+    axs[1].plot(history.history['val_loss'], label='Validation Loss')
+    axs[1].set_title('Training and Validation Loss')
+    axs[1].set_xlabel('Epoch')
+    axs[1].set_ylabel('Loss')
+    axs[1].legend()
+
+    plt.show()
+
+# Plot training history
+plot_training_history(history)
+
+# Save in HDF5 format
+model2.save('/content/drive/My Drive/CNN_model.h5')
+
+
+import os
+import numpy as np
+import cv2
+import random
+import matplotlib.pyplot as plt
+import tensorflow as tf
+
+# Load the trained model
+# model12 = tf.keras.models.load_model('/content/path/to/save/your/model2.h5')
+
+# Define image size
+image_height, image_width = 255, 255
+
+# Function to preprocess input image(s)
+def preprocess_image(image_path):
+    img = cv2.imread(image_path)
+    img = cv2.resize(img, (image_height, image_width))
+    img = img.astype('float32') / 255.0  # Normalize pixel values
+    img = np.expand_dims(img, axis=0)  # Add batch dimension
+    return img
+
+# Directory containing dataset
+dataset_dir = '/content/drive/MyDrive/minar project dataset/train'
+
+# Get list of all image files in the dataset
+image_files = []
+for category in os.listdir(dataset_dir):
+    category_dir = os.path.join(dataset_dir, category)
+    image_files.extend([os.path.join(category_dir, file) for file in os.listdir(category_dir)])
+
+# Choose a random image from the dataset
+random_image_path = random.choice(image_files)
+
+# Preprocess the random image
+input_image = preprocess_image(random_image_path)
+
+# Get prediction for the random image
+predictions = model2.predict(input_image)
+predicted_class = "Fresh" if predictions[0][0] > 0.5 else "Stale"  # Adjust based on your labels
+confidence = predictions[0][0] if predicted_class == "Fresh" else (1 - predictions[0][0])  # Confidence score
+
+# Display the random image along with its predicted class
+img = cv2.imread(random_image_path)
+img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # Convert BGR to RGB for display
+plt.imshow(img)
+plt.title(f"Predicted class: {predicted_class}, Confidence: {confidence:.4f}")
+plt.axis('off')
+plt.show()
+
+
+import os
+import numpy as np
+import cv2
+import random
+import matplotlib.pyplot as plt
+import tensorflow as tf
+
+# Load the trained model
+# model12 = tf.keras.models.load_model('/content/path/to/save/your/model2.h5')
+
+# Define image size
+image_height, image_width = 255, 255
+
+# Function to preprocess input image(s)
+def preprocess_image(image_path):
+    img = cv2.imread(image_path)
+    img = cv2.resize(img, (image_height, image_width))
+    img = img.astype('float32') / 255.0  # Normalize pixel values
+    img = np.expand_dims(img, axis=0)  # Add batch dimension
+    return img
+
+# Directory containing dataset
+dataset_dir = '/content/drive/MyDrive/minar project dataset/train'
+
+# Get list of all image files in the dataset
+image_files = []
+for category in os.listdir(dataset_dir):
+    category_dir = os.path.join(dataset_dir, category)
+    image_files.extend([os.path.join(category_dir, file) for file in os.listdir(category_dir)])
+
+# Choose 9 random images from the dataset
+random_image_paths = random.sample(image_files, 9)
+
+# Create a subplot with 3 rows and 3 columns
+fig, axs = plt.subplots(3, 3, figsize=(12, 12))
+
+# Loop through each random image
+for i, image_path in enumerate(random_image_paths):
+    # Preprocess the image
+    input_image = preprocess_image(image_path)
+
+    # Get prediction for the image
+    predictions = model2.predict(input_image)
+    predicted_class = "Fresh" if predictions[0][0] > 0.5 else "Stale"  # Adjust based on your labels
+    confidence = predictions[0][0] if predicted_class == "Fresh" else (1 - predictions[0][0])  # Confidence score
+
+    # Display the image along with its predicted class
+    img = cv2.imread(image_path)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # Convert BGR to RGB for display
+    axs[i // 3, i % 3].imshow(img)
+    axs[i // 3, i % 3].set_title(f"Predicted class: {predicted_class}, Confidence: {confidence:.4f}")
+    axs[i // 3, i % 3].axis('off')
+
+plt.tight_layout()
+plt.show()
+
+
+import os.path
+from os import path
+
+if path.exists('/content/apple_yolo_cut_picture') == False:
+  os.mkdir('/content/apple_yolo_cut_picture')
+
+os.chdir('/content/apple_yolo_cut_picture')
+
+
+from ultralytics import YOLO
+
+import cv2
+
+# Load the YOLOv8 model
+model = YOLO('/content/yolov8n.pt')
+
+# Perform inference on an image
+results = model('/content/drive/MyDrive/Image/Image1.jpg')
+
+# Load the original image
+image = "/content/drive/MyDrive/Image/Image1.jpg"
+img = cv2.imread(image)
+
+# Extract bounding boxes
+boxes = results[0].boxes.xyxy.tolist()
+
+new_path='/content/apple_yolo_cut_picture'
+
+# Iterate through the bounding boxes
+for i, box in enumerate(boxes):
+    x1, y1, x2, y2 = box
+    # Crop the object using the bounding box coordinates
+    ultralytics_crop_object = img[int(y1):int(y2), int(x1):int(x2)]
+    # Save the cropped object as an image
+    cv2.imwrite('/content/apple_yolo_cut_picture/ultralytics_crop_' + str(i) + '.jpg', ultralytics_crop_object)
+
+
+import tensorflow as tf
+import cv2
+import numpy as np
+
+# importing required libraries
+import matplotlib.pyplot as plt
+import matplotlib.image as img
+
+image_path2='/content/drive/MyDrive/Image/Image1.jpg'
+print("Input image:")
+testImage2 = img.imread(image_path2)
+
+# displaying the image
+plt.imshow(testImage2)
+# plt.imshow(image_path)
+plt.show()
+
+# Load the trained model
+# model = tf.keras.models.load_model('/content/drive/MyDrive/minar_project_dataset/train/stale_apple/Screen Shot 2018-06-07 at 2.15.50 PM.png')
+
+# Function to preprocess input image(s)
+def preprocess_image(image_path):
+    img = cv2.imread(image_path)
+    img = cv2.resize(img, (image_height, image_width))
+    img = img.astype('float32') / 255.0  # Normalize pixel values
+    img = np.expand_dims(img, axis=0)  # Add batch dimension
+    return img
+
+# Example usage: Get prediction for a single image
+# image_path = '/content/drive/MyDrive/Image/image3.jpg'
+
+image_path = '/content/apple_yolo_cut_picture/ultralytics_crop_0.jpg'
+# image_path = '/content/drive/MyDrive/minar_project_dataset/test/stale_apple/vertical_flip_Screen Shot 2018-06-08 at 2.29.33 PM.png'
+
+input_image = preprocess_image(image_path)
+predictions = model2.predict(input_image)
+
+# Interpret the predictions
+predicted_class = "fresh_apple" if predictions[0][0] > 0.5 else "stale_apple"  # Adjust based on your labels
+confidence = predictions[0][0] if predicted_class == "fresh_apple" else 1 - predictions[0][0]  # Confidence score
+print("Predicted class:", predicted_class)
+print("Confidence:", confidence)
+
+
+
+# reading the image
+testImage = img.imread(image_path)
+
+# displaying the image
+plt.imshow(testImage)
+# plt.imshow(image_path)
+plt.show()
